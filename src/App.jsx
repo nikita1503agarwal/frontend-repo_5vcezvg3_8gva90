@@ -1,69 +1,87 @@
+import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import EditorPanel from './components/EditorPanel'
+import Preview from './components/Preview'
+
+const defaultProject = {
+  name: 'Zenview Eyewear',
+  description: 'Quiet luxury eyewear storefront',
+  products: [
+    { name: 'Aero 01', price: 420, description: 'Sculptural acetate, balanced silhouette' },
+    { name: 'Linea 02', price: 460, description: 'Slim titanium, architectural lines' },
+    { name: 'Shade 03', price: 480, description: 'Deep lens profile, cinematic' },
+  ],
+  theme: { accent: '#C2A676', background: '#FAFAF8', text: '#111111' },
+  sections: {
+    hero_title: 'Zenview Eyewear',
+    hero_subtitle: 'See Without Noise',
+    hero_cta: 'Shop the Collection',
+    story_title: 'Quiet Luxury, Considered Design',
+    story_body: 'Handcrafted eyewear balancing proportion, material and restraint.',
+    craft_title: 'Craftsmanship & Materials',
+    craft_points: [
+      'Premium Italian acetate, hand-polished',
+      'Anti-reflective Zeiss lenses',
+      'Featherlight titanium hardware',
+      'Precision-balanced comfort fit',
+    ],
+    lookbook_title: 'Lookbook',
+    testimonials: [
+      'Understated and impeccably made.',
+      'The only frames I wear now.',
+      'Pure, quiet confidence.',
+    ],
+    faqs: [
+      { q: 'What makes Zenview different?', a: 'A focus on restraint, proportion and material honesty.' },
+      { q: 'Do you ship internationally?', a: 'Yes, we ship worldwide with premium tracked service.' },
+      { q: 'What is your return policy?', a: '30-day returns in original condition for a full refund.' },
+    ],
+  },
+  images: {}
+}
+
 function App() {
+  const [project, setProject] = useState(defaultProject)
+  const [projectId, setProjectId] = useState(null)
+  const backend = import.meta.env.VITE_BACKEND_URL
+
+  const save = async () => {
+    if (!backend) return alert('Backend URL not configured')
+    if (!projectId) {
+      // create
+      const res = await fetch(`${backend}/api/projects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ project }) })
+      const data = await res.json()
+      setProjectId(data.id)
+    } else {
+      await fetch(`${backend}/api/projects/${projectId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: projectId, project }) })
+    }
+  }
+
+  const exportZip = async () => {
+    if (!projectId) { await save() }
+    const id = projectId || (await (await fetch(`${backend}/api/projects`)).json())[0]?.id
+    if (!id) return alert('No project to export')
+    const url = `${backend}/api/projects/${id}/export.zip`
+    window.open(url, '_blank')
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
+    <div className="min-h-screen bg-[#F7F7F4] text-neutral-900">
+      {/* Top bar */}
+      <div className="sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-black/5">
+        <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center justify-between">
+          <div className="font-serif tracking-wide">Zenview Builder</div>
+          <div className="text-xs text-neutral-500">Tagline: See Without Noise</div>
+        </div>
+      </div>
 
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
-          </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
-          </div>
+      {/* Editor + Preview */}
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[420px,1fr] gap-6 p-6">
+        <div className="rounded-2xl overflow-hidden border border-black/5 bg-white shadow-[0_20px_60px_rgba(0,0,0,.06)] h-[calc(100vh-120px)]">
+          <EditorPanel project={project} setProject={setProject} onSave={save} onExportZip={exportZip} />
+        </div>
+        <div className="rounded-2xl overflow-hidden border border-black/5 bg-white shadow-[0_20px_60px_rgba(0,0,0,.06)] h-[calc(100vh-120px)]">
+          <Preview project={project} />
         </div>
       </div>
     </div>
